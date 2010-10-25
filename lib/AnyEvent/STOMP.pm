@@ -8,7 +8,7 @@ use Carp qw(croak confess);
 use AnyEvent;
 use AnyEvent::Handle;
 
-our $VERSION = 0.01;
+our $VERSION = 0.11;
 
 =head1 NAME
 
