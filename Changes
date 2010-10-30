@@ -1,5 +1,10 @@
 Revision history for AnyEvent-STOMP:
 
+0.2     Sat Oct 30 12:14:31 PDT 2010
+        - Fixed auto-acknowledge mode (in prior releases, server never needed
+          acknowledgment regardless of the setting).
+        - Added manual acknowledgment mode.
+
 0.11    Sun Oct 24 18:18:37 PDT 2010
         - Skipped Pod::Coverage test.
 
