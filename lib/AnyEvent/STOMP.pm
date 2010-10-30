@@ -8,7 +8,7 @@ use Carp qw(croak confess);
 use AnyEvent;
 use AnyEvent::Handle;
 
-our $VERSION = 0.11;
+our $VERSION = 0.2;
 
 =head1 NAME
 
@@ -73,7 +73,18 @@ If defined, subscribe to the specified destination (queue) upon connection.
 
 =item ack
 
-If set to a true value, automatically acknowledge all frames received.
+Sets the behavior with respect to STOMP frame acknowledgments.  
+
+If this value is 0 or undef, no acknowledgment is required: the server will
+consider all sent frames to be delivered, regardless of whether the client has
+actually received them.  (This is the default behavior according to the STOMP
+protocol.)
+
+If set to C<auto>, the client will automatically acknowledge a frame upon
+receipt.  
+
+If set to C<manual>, the caller must acknowledge frames manually via the 
+ack() method.
 
 =item connect_headers
 
@@ -95,6 +106,8 @@ sub connect {
         $connect_headers, $subscribe_headers) = @_;
 
     croak "No host provided" unless $host;
+    croak "ack value must be 0, undef, 'auto' or 'manual'" 
+        if $ack && $ack ne "auto" && $ack ne "manual";
 
     my $self = $class->SUPER::new;
 
@@ -108,12 +121,12 @@ sub connect {
         on_connect => sub { 
             $self->send_frame("CONNECT", undef, $connect_headers);
             if ($destination) {
-                $subscribe_headers ||= {};
                 $subscribe_headers->{destination} = $destination;
+                $subscribe_headers->{ack} = "client" if $ack;
                 my $cb; $cb = $self->reg_cb(CONNECTED => sub { 
                         $self->{session_id} = $_[2]->{session};
                         $self->send_frame("SUBSCRIBE", 
-				          undef, $subscribe_headers);
+                            undef, $subscribe_headers);
                         undef $cb;
                 });
             }
@@ -241,7 +254,7 @@ sub _receive_frame {
                     $body = $_[1];
                     $body =~ s/\000\n*$//;
 
-                    if ($self->{ack}) {
+                    if ($self->{ack} eq "auto") {
                         $self->send_frame("ACK", undef, 
                                           {"message-id" => $headers->{"message-id"}});
                     }
