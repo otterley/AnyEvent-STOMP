@@ -1,5 +1,8 @@
 Revision history for AnyEvent-STOMP:
 
+0.3     Wed Nov 10 22:33:57 PST 2010
+        - Set SO_KEEPALIVE on the server connection socket.
+
 0.2     Sat Oct 30 12:14:31 PDT 2010
         - Fixed auto-acknowledge mode (in prior releases, server never needed
           acknowledgment regardless of the setting).
