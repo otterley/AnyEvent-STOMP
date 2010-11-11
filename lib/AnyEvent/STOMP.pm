@@ -4,11 +4,11 @@ use 5.008;
 use common::sense;
 
 use base 'Object::Event';
-use Carp qw(croak confess);
+use Carp qw(croak);
 use AnyEvent;
 use AnyEvent::Handle;
 
-our $VERSION = 0.3;
+our $VERSION = 0.4;
 
 =head1 NAME
 
@@ -105,9 +105,9 @@ sub connect {
     my ($host, $port, $ssl, $destination, $ack, 
         $connect_headers, $subscribe_headers) = @_;
 
-    croak "No host provided" unless $host;
+    croak 'No host provided' unless $host;
     croak "ack value must be 0, undef, 'auto' or 'manual'" 
-        if $ack && $ack ne "auto" && $ack ne "manual";
+        if $ack && $ack ne 'auto' && $ack ne 'manual';
 
     my $self = $class->SUPER::new;
 
@@ -115,20 +115,21 @@ sub connect {
     
     $port ||= ($ssl ? 61612 : 61613);
 
+    my $connect_cb;
     $self->{handle} = AnyEvent::Handle->new(
         connect => [ $host, $port ],
-        tls => $ssl ? "connect" : undef,
+        tls => $ssl ? 'connect' : undef,
         keepalive => 1,
         on_connect => sub { 
-            $self->send_frame("CONNECT", undef, $connect_headers);
+            $self->send_frame('CONNECT', undef, $connect_headers);
             if ($destination) {
                 $subscribe_headers->{destination} = $destination;
-                $subscribe_headers->{ack} = "client" if $ack;
-                my $cb; $cb = $self->reg_cb(CONNECTED => sub { 
+                $subscribe_headers->{ack} = 'client' if $ack;
+                $connect_cb = $self->reg_cb(CONNECTED => sub { 
                         $self->{session_id} = $_[2]->{session};
-                        $self->send_frame("SUBSCRIBE", 
+                        $self->send_frame('SUBSCRIBE', 
                             undef, $subscribe_headers);
-                        undef $cb;
+                        undef $connect_cb;
                 });
             }
         },
@@ -136,6 +137,8 @@ sub connect {
             $self->event('connect_error', $_[1]);
         },
         on_error => sub {
+            $self->unreg_cb($connect_cb);
+            $self->{handle}->destroy;
             $self->event('io_error', $_[2]);
         },
         on_read => sub { $self->_receive_frame },
@@ -156,7 +159,7 @@ sub send {
     my $self = shift;
     my ($body, $destination, $headers) = @_;
 
-    croak "Missing destination" unless defined $destination;
+    croak 'Missing destination' unless defined $destination;
 
     $headers->{destination} = $destination;
     $self->send_frame('SEND', $body, $headers);
@@ -177,9 +180,9 @@ sub send_frame {
     my $self = shift;
     my ($command, $body, $headers) = @_;
 
-    croak "Missing command" unless $command;
+    croak 'Missing command' unless $command;
 
-    $headers->{"content-length"} = length $body;
+    $headers->{'content-length'} = length $body;
 
     my $frame = sprintf("%s\n%s\n\n%s\000",
                         $command,
@@ -255,9 +258,9 @@ sub _receive_frame {
                     $body = $_[1];
                     $body =~ s/\000\n*$//;
 
-                    if ($self->{ack} eq "auto") {
-                        $self->send_frame("ACK", undef, 
-                                          {"message-id" => $headers->{"message-id"}});
+                    if ($self->{ack} eq 'auto' && defined $headers->{'message-id'}) {
+                        $self->send_frame('ACK', undef, 
+                                          {'message-id' => $headers->{'message-id'}});
                     }
 
                     $self->event($command, $body, $headers);
@@ -280,7 +283,7 @@ sub ack {
     my $self = shift;
     my ($id, $transaction) = @_;
 
-    croak "Missing ID" unless $id;
+    croak 'Missing ID' unless $id;
 
     my $headers = { 'message-id' => $id };
     $headers->{transaction} = $transaction if defined $transaction;
@@ -289,7 +292,7 @@ sub ack {
 }
 
 sub DESTROY {
-    shift->send("DISCONNECT");
+    shift->send('DISCONNECT');
 }
 
 =head1 SEE ALSO
