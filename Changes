@@ -1,5 +1,10 @@
 Revision history for AnyEvent-STOMP:
 
+0.4     Thu Nov 11 14:40:00 PST 2010
+        - Fixed a memory leak in the I/O error callback.
+        - Fixed auto-acknowledge mode (only acknowledge messages having a 
+          'message-id' header).
+
 0.3     Wed Nov 10 22:33:57 PST 2010
         - Set SO_KEEPALIVE on the server connection socket.
 
