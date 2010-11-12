@@ -1,5 +1,9 @@
 Revision history for AnyEvent-STOMP:
 
+0.5     Thu Nov 11 16:55:38 PST 2010
+        - Added support for 'prepare' and 'connect' events (same as
+          on_prepare and on_connect callbacks in AnyEvent::Handle).
+
 0.4     Thu Nov 11 14:40:00 PST 2010
         - Fixed a memory leak in the I/O error callback.
         - Fixed auto-acknowledge mode (only acknowledge messages having a 
