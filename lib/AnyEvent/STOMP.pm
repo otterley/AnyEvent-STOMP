@@ -8,7 +8,7 @@ use Carp qw(croak);
 use AnyEvent;
 use AnyEvent::Handle;
 
-our $VERSION = 0.4;
+our $VERSION = 0.5;
 
 =head1 NAME
 
@@ -120,7 +120,9 @@ sub connect {
         connect => [ $host, $port ],
         tls => $ssl ? 'connect' : undef,
         keepalive => 1,
+        on_prepare => sub { $self->event('prepare', @_); },
         on_connect => sub { 
+            $self->event('connect', @_);
             $self->send_frame('CONNECT', undef, $connect_headers);
             if ($destination) {
                 $subscribe_headers->{destination} = $destination;
@@ -199,7 +201,7 @@ the receipt of new messages (assuming you've connected as a subscriber).
 
 The typical use is:
 
- $client->reg_cb($type => cb->($client, $body, $headers));
+ $client->reg_cb($type => $cb->($client, $body, $headers));
 
 In most cases, $type is C<MESSAGE>, but you can also register interest 
 in any other type of frame (C<RECEIPT>, C<ERROR>, etc.).  (If you register
@@ -213,19 +215,29 @@ Other events you can register interest in are:
 
 =over
 
-=item frame => cb->($client, $type, $body, $headers)
+=item prepare => $cb->($client, $handle)
+
+Will be fired after a client socket has been allocated.  See C<on_prepare> in
+AnyEvent::Handle for more details.
+
+=item connect => $cb->($client, $handle, $host, $port, $retry->())
+
+Will be fired when the client has successfully connected to the STOMP server.
+See C<on_connect> in AnyEvent::Handle for more details.
+
+=item frame => $cb->($client, $type, $body, $headers)
 
 Will be fired whenever any frame is received.  
 
-=item connect_error => cb->($client, $errmsg)
+=item connect_error => $cb->($client, $errmsg)
 
-Will be fired if the attempt to connect to the STOMP server fails (see
-on_connect_error in AnyEvent::Handle for more details).
+Will be fired if the attempt to connect to the STOMP server fails.  See
+C<on_connect_error> in AnyEvent::Handle for more details.
 
-=item io_error => cb->($client, $errmsg)
+=item io_error => $cb->($client, $errmsg)
 
-Will be fired if an I/O error occurs (see on_error in AnyEvent::Handle 
-for more details).
+Will be fired if an I/O error occurs.  See C<on_error> in AnyEvent::Handle 
+for more details.
 
 =back
 
