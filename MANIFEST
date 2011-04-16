@@ -1,8 +1,10 @@
 Changes
-MANIFEST
-Makefile.PL
-README
+ignore.txt
 lib/AnyEvent/STOMP.pm
+Makefile.PL
+MANIFEST
+README
 t/00-load.t
+t/boilerplate.t
 t/manifest.t
 t/pod.t
