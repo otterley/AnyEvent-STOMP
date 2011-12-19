@@ -184,7 +184,7 @@ sub send_frame {
 
     croak 'Missing command' unless $command;
 
-    $headers->{'content-length'} = length $body;
+    $headers->{'content-length'} = length $body || 0;
 
     my $frame = sprintf("%s\n%s\n\n%s\000",
                         $command,
